@@ -71,7 +71,10 @@ async function main() {
     console.log(url);
     const task = await video.createTask(tokenValue, url);
     console.log(task);
-    utils.printInfo("视频转文案任务创建成功");
+    if (!task || !task?.id || task.id === "") {
+      throw new Error("创建视频转文案任务失败，请反馈给开发者");
+    }
+    utils.printInfo("视频转文案任务创建成功: " + task.id);
   } catch (error) {
     console.log(error);
     return;
