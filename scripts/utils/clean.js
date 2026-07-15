@@ -5,27 +5,37 @@ const fs = require("fs");
 const path = require("path");
 
 function deleteExpire() {
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
   const filepath = helper.downloadPath();
 
   fs.readdir(filepath, (err, files) => {
     if (err) {
-      utils.printError("读取临时下载目录失败: " + err);
       return;
     }
     files.forEach((file) => {
-      let timestamp = file.split("_")[0];
-      timestamp = Number(timestamp);
-      if (timestamp < now - constants.EXPIRE_TIME) {
-        utils.printInfo(
-          "清理技能运行中临时下载的过期文件: " + file + " ，以节省本次磁盘空间",
-        );
-        fs.unlink(path.join(filepath, file), (err) => {
-          if (err) {
-            utils.printError("删除过期文件失败: " + err);
+      fs.stat(path.join(filepath, file), (err, stats) => {
+        if (err) {
+          return;
+        }
+        if (stats.birthtime) {
+          stats.birthtime = new Date(Date.parse(stats.birthtime));
+          if (stats.birthtime.getTime() < now - constants.EXPIRE_TIME * 1000) {
+            utils.printInfo(
+              "清理技能运行中临时下载的过期文件: " + file + " ，以节省磁盘空间",
+            );
+            fs.unlink(path.join(filepath, file), (err) => {
+              if (err) {
+                utils.printError("删除过期文件失败: " + err);
+              }
+            });
           }
-        });
-      }
+        } else {
+          utils.printError(
+            "获取文件时间属性失败，本技能运行过程中会下载视频文件，可能占用磁盘空间，建议手动删除，文件路径: " +
+              filepath,
+          );
+        }
+      });
     });
   });
 }

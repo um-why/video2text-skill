@@ -4,6 +4,6 @@ module.exports = {
   CREATE_MAX_ATTEMPTS: 3,
   QUERY_MAX_ATTEMPTS: 60,
   RETRY_INTERVAL: 2000,
-  EXPIRE_TIME: 60 * 5,
+  EXPIRE_TIME: 60 * 60 * 24,
   VERSION: "1.0.0",
 };
