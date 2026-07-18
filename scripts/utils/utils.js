@@ -24,21 +24,6 @@ function printLog(level, message) {
   );
 }
 
-function suffix(filename) {
-  try {
-    let url = new URL(filename);
-    let parts = url.pathname.split(".");
-    let suffix = parts[parts.length - 1];
-    if (suffix.length > 5) {
-      return ".mp4";
-    } else {
-      return "." + suffix;
-    }
-  } catch (_) {
-    return ".mp4";
-  }
-}
-
 module.exports = {
   printBanner,
   printHelp,
@@ -46,5 +31,4 @@ module.exports = {
   printSuccess: (msg) => printLog("SUCCESS", msg),
   printError: (msg) => printLog("ERROR", msg),
   printWarn: (msg) => printLog("WARN", msg),
-  suffix,
 };

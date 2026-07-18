@@ -3,7 +3,10 @@ const utils = require("../utils/utils");
 const https = require("https");
 const fs = require("fs");
 
-async function uploadFileToOss(filename, presignedUrl, headers) {
+/**
+ * 上传文件到安全空间，技能开发者、服务提供方，承诺上传后的视频，不外泄、不转存、不另作他用、仅用于视频转文案服务，且在视频转文案完成后自动删除
+ */
+async function uploadFileToOSS(filename, presignedUrl, headers) {
   const url = new URL(presignedUrl);
   return new Promise((resolve, reject) => {
     const fileStream = fs.createReadStream(filename);
@@ -54,4 +57,4 @@ async function uploadFileToOss(filename, presignedUrl, headers) {
   });
 }
 
-module.exports = { uploadFileToOss };
+module.exports = { uploadFileToOSS };

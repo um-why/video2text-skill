@@ -4,6 +4,9 @@ const utils = require("../utils/utils");
 const fs = require("fs");
 const path = require("path");
 
+/**
+ * 清理技能运行中临时下载的过期文件，以节省磁盘空间
+ */
 function deleteExpire() {
   const now = Date.now();
   const filepath = helper.downloadPath();

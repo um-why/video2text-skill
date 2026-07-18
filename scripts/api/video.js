@@ -12,7 +12,7 @@ async function getPresignedUrl(token, filename) {
 
   const response = await requestApi(
     "POST",
-    "/api/video/upload",
+    "/api/video/presign",
     params,
     data,
     constants.CREATE_MAX_ATTEMPTS,
@@ -25,7 +25,7 @@ async function getPresignedUrl(token, filename) {
   }
 }
 
-async function createTask(token, url) {
+async function getVideoId(token, url) {
   const params = {
     _: Date.now(),
     token,
@@ -34,11 +34,36 @@ async function createTask(token, url) {
 
   const response = await requestApi(
     "POST",
-    "/api/video/url",
+    "/api/video/id",
     params,
     data,
     constants.CREATE_MAX_ATTEMPTS,
-    "创建任务",
+    "视频ID",
+  );
+  if (response.data) {
+    return response.data;
+  } else {
+    return [];
+  }
+}
+
+async function getVideoText(token, id, prompt = "") {
+  const params = {
+    _: Date.now(),
+    token,
+  };
+  const data = {
+    id,
+    prompt,
+  };
+
+  const response = await requestApi(
+    "POST",
+    "/api/video/text",
+    params,
+    data,
+    constants.QUERY_MAX_ATTEMPTS,
+    "视频文案",
   );
   if (response.data) {
     return response.data;
@@ -49,5 +74,6 @@ async function createTask(token, url) {
 
 module.exports = {
   getPresignedUrl,
-  createTask,
+  getVideoId,
+  getVideoText,
 };

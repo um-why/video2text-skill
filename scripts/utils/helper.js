@@ -2,6 +2,9 @@ const { Downloader } = require("../utils/download.js");
 const path = require("path");
 const constants = require("../config/constants");
 
+/**
+ * 定义技能下载目录路径
+ */
 function downloadPath() {
   return path.join(path.dirname(__filename), "..", "..", "tmp");
 }
@@ -23,7 +26,10 @@ function byteHumanize(byte) {
   );
 }
 
-function download(url, path) {
+/**
+ * 下载文件
+ */
+async function download(url, path) {
   return new Promise((resolve, reject) => {
     const options = {
       retry: {

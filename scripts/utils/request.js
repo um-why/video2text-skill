@@ -117,6 +117,9 @@ async function withRetry(fn, maxAttempts, errorHandler) {
   throw lastError || new Error(`重试 ${maxAttempts} 次后失败`);
 }
 
+/**
+ * 支持重试的API请求方法
+ */
 async function requestApi(method, path, params, data, maxAttempts, actionName) {
   return await withRetry(
     async () => {
