@@ -20,7 +20,7 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
     const req = https.request(
       { ...options, timeout: constants.REQUEST_TIMEOUT },
       (res) => {
-        res.setEncoding("binary");
+        // res.setEncoding("binary");
         let body = "";
         res.on("data", (chunk) => (body += chunk));
         res.on("end", () => {
@@ -32,11 +32,6 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
         });
       },
     );
-
-    fileStream.pipe(req).on("error", (error) => {
-      utils.printError(`上传读取文件失败: ${error.message}`);
-      reject(error);
-    });
 
     fileStream.on("error", (error) => {
       utils.printError(`上传读取文件失败: ${error.message}`);
@@ -50,6 +45,7 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
 
     req.on("timeout", () => {
       utils.printError(`上传请求超时: ${constants.REQUEST_TIMEOUT}ms`);
+      req.destroy();
       reject(new Error("上传请求超时"));
     });
 

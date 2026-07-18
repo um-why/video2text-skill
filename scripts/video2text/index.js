@@ -8,7 +8,6 @@ const utils = require("../utils/utils");
 const validator = require("../utils/validator");
 const video = require("../api/video");
 const fs = require("fs");
-const path = require("path");
 
 /**
  * 解析命令行参数
@@ -40,16 +39,12 @@ function parseArgs(args) {
   if (!result.filename) {
     if (args.length === 1) {
       result.filename = args[0];
-    } else {
-      utils.printError("请指定视频的文件路径或URL");
     }
   }
   return result;
 }
 
 async function main() {
-  const startTime = Date.now();
-
   clean.deleteExpire();
 
   const args = process.argv.slice(2);
@@ -81,8 +76,17 @@ async function main() {
 
       try {
         const downloadResult = await helper.download(filename, filepath);
-        utils.printInfo("网络视频已下载到本地: " + downloadResult?.filePath);
-        filename = downloadResult?.filePath;
+        let tempFilePath = downloadResult?.filePath || "";
+        if (
+          filename.indexOf("douyinvod.com") !== -1 &&
+          tempFilePath !== "" &&
+          tempFilePath.indexOf(".") === -1
+        ) {
+          fs.renameSync(tempFilePath, tempFilePath + ".mp4");
+          tempFilePath += ".mp4";
+        }
+        utils.printInfo("网络视频已下载到本地: " + tempFilePath);
+        filename = tempFilePath;
       } catch (error) {
         utils.printError("下载失败: " + error);
         return;

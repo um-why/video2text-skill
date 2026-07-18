@@ -6,9 +6,7 @@ async function getPresignedUrl(token, filename) {
     _: Date.now(),
     token,
   };
-  const data = {
-    file: filename,
-  };
+  const data = { file: filename };
 
   const response = await requestApi(
     "POST",
@@ -52,10 +50,7 @@ async function getVideoText(token, id, prompt = "") {
     _: Date.now(),
     token,
   };
-  const data = {
-    id,
-    prompt,
-  };
+  const data = { id, prompt };
 
   const response = await requestApi(
     "POST",
