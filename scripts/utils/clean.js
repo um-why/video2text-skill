@@ -20,9 +20,10 @@ function deleteExpire() {
         if (err) {
           return;
         }
-        if (stats.birthtime) {
-          stats.birthtime = new Date(Date.parse(stats.birthtime));
-          if (stats.birthtime.getTime() < now - constants.EXPIRE_TIME * 1000) {
+        const fileTime = stats.mtime || stats.birthtime;
+        if (fileTime) {
+          const fileDate = new Date(Date.parse(fileTime));
+          if (fileDate.getTime() < now - constants.EXPIRE_TIME * 1000) {
             utils.printInfo(
               "清理技能运行中临时下载的过期文件: " + file + " ，以节省磁盘空间",
             );

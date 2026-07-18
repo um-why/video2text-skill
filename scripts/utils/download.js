@@ -1,11 +1,11 @@
-import * as fs from "fs";
-import { URL } from "url";
-import * as path from "path";
-import * as http from "http";
-import * as https from "https";
-import { EventEmitter } from "events";
+const fs = require("fs");
+const { URL } = require("url");
+const path = require("path");
+const http = require("http");
+const https = require("https");
+const { EventEmitter } = require("events");
 
-export const DOWNLOAD_STATES = {
+const DOWNLOAD_STATES = {
   IDLE: "IDLE",
   SKIPPED: "SKIPPED",
   STARTED: "STARTED",
@@ -21,7 +21,7 @@ export const DOWNLOAD_STATES = {
 /**
  * https://github.com/hgouveia/node-downloader-helper
  */
-export class Downloader extends EventEmitter {
+class Downloader extends EventEmitter {
   constructor(url, savePath, options = {}) {
     super({ captureRejections: true });
 
@@ -33,13 +33,13 @@ export class Downloader extends EventEmitter {
     this.state = DOWNLOAD_STATES.IDLE;
     this.__defaultOpts = {
       body: null,
-      retry: false, // { maxRetries: 3, delay: 3000 }
+      retry: false,
       method: "GET",
       headers: {},
       fileName: "",
-      timeout: -1, // -1 use default
+      timeout: -1,
       metadata: null,
-      override: false, // { skip: false, skipSmaller: false }
+      override: false,
       forceResume: false,
       removeOnStop: true,
       removeOnFail: true,
@@ -137,7 +137,6 @@ export class Downloader extends EventEmitter {
   resume() {
     this.__redirectCount = 0;
 
-    // if the promise is null, the download was started using resume instead of start
     if (!this.__promise) {
       return this.start();
     }
@@ -162,7 +161,6 @@ export class Downloader extends EventEmitter {
     const removeFile = () =>
       new Promise((resolve, reject) => {
         fs.access(this.__filePath, (_accessErr) => {
-          // if can't access, probably is not created yet
           if (_accessErr) {
             this.__emitStop();
             return resolve(true);
@@ -230,7 +228,6 @@ export class Downloader extends EventEmitter {
       this.__opts.httpsRequestOptions.timeout = this.__opts.timeout;
     }
 
-    // validate the progressThrottle, if invalid, use the default
     if (
       typeof this.__opts.progressThrottle !== "number" ||
       this.__opts.progressThrottle < 0
@@ -335,7 +332,6 @@ export class Downloader extends EventEmitter {
           }
           if (response.statusCode < 200 || response.statusCode >= 400) {
             const err = new Error(`Response status was ${response.statusCode}`);
-            // 5xx server errors
             if (
               this.__opts.retry &&
               response.statusCode >= 500 &&
@@ -418,7 +414,6 @@ export class Downloader extends EventEmitter {
       this.__initProtocol(this.url);
     }
 
-    // Start the Download
     this.__response = null;
     this.__isAborted = false;
 
@@ -436,7 +431,6 @@ export class Downloader extends EventEmitter {
       this.__promise.reject,
     );
 
-    // Error Handling
     this.__request.on(
       "error",
       this.__onError(this.__promise.resolve, this.__promise.reject),
@@ -470,20 +464,17 @@ export class Downloader extends EventEmitter {
     return this.__protocol.request(this.__reqOptions, (response) => {
       this.__response = response;
 
-      //Stats
       if (!this.__isResumed) {
         this.__total = parseInt(response.headers["content-length"]) || null;
         this.__resetStats();
       }
 
-      // if returned 200 instead of 206, server ignored range request, reset and start over
       if (this.__isResumed && response.statusCode === 200) {
         this.__isResumed = false;
         this.__total = parseInt(response.headers["content-length"]) || null;
         this.__resetStats();
       }
 
-      // Handle Redirects
       if (this.__isRequireRedirect(response)) {
         this.__redirectCount++;
         if (this.__redirectCount > this.__opts.maxRedirects) {
@@ -502,13 +493,11 @@ export class Downloader extends EventEmitter {
         return this.__start();
       }
 
-      // check if response wans't a success
       if (response.statusCode < 200 || response.statusCode >= 400) {
         const err = new Error(`Response status was ${response.statusCode}`);
         err.status = response.statusCode || 0;
         err.body = response.body || "";
 
-        // 5xx server errors
         if (response.statusCode >= 500 && response.statusCode < 600) {
           return this.__onError(resolve, reject)(err);
         }
@@ -560,7 +549,6 @@ export class Downloader extends EventEmitter {
       this.__fileStream = fs.createWriteStream(this.__filePath, { flags: "a" });
     }
 
-    // Start Downloading
     this.emit("download", {
       fileName: this.__fileName,
       filePath: this.__filePath,
@@ -575,7 +563,6 @@ export class Downloader extends EventEmitter {
     this.__statsEstimate.time = new Date();
     this.__statsEstimate.throttleTime = new Date();
 
-    // Add externals pipe
     readable.on("data", (chunk) => this.__calculateStats(chunk.length));
     this.__pipes.forEach((pipe) => {
       readable.pipe(pipe.stream, pipe.options);
@@ -700,7 +687,6 @@ export class Downloader extends EventEmitter {
 
     const { delay: retryDelay = 0, maxRetries = 999 } = this.__opts.retry;
 
-    // reached the maximum retries
     if (this.__retryCount >= maxRetries) {
       return Promise.reject(err || new Error("reached the maximum retries"));
     }
@@ -776,9 +762,9 @@ export class Downloader extends EventEmitter {
     let fileName = "";
 
     const fileNameAndEncodingRegExp =
-      /.*filename\*=.*?'.*?'([^"].+?[^"])(?:(?:;)|$)/i; // match everything after the specified encoding behind a case-insensitive `filename*=`
-    const fileNameWithQuotesRegExp = /.*filename="(.*?)";?/i; // match everything inside the quotes behind a case-insensitive `filename=`
-    const fileNameWithoutQuotesRegExp = /.*filename=([^"].+?[^"])(?:(?:;)|$)/i; // match everything immediately after `filename=` that isn't surrounded by quotes and is followed by either a `;` or the end of the string
+      /.*filename\*=.*?'.*?'([^"].+?[^"])(?:(?:;)|$)/i;
+    const fileNameWithQuotesRegExp = /.*filename="(.*?)";?/i;
+    const fileNameWithoutQuotesRegExp = /.*filename=([^"].+?[^"])(?:(?:;)|$)/i;
 
     const ContentDispositionHeaderExists = headers.hasOwnProperty(
       "content-disposition",
@@ -797,7 +783,6 @@ export class Downloader extends EventEmitter {
         ? null
         : headers["content-disposition"].match(fileNameWithoutQuotesRegExp);
 
-    // Get Filename
     if (
       ContentDispositionHeaderExists &&
       (fileNameAndEncodingMatch ||
@@ -824,7 +809,7 @@ export class Downloader extends EventEmitter {
 
     return this.__opts.fileName
       ? this.__getFileNameFromOpts(fileName, response)
-      : fileName.replace(/\.*$/, ""); // remove any potential trailing '.' (just to be sure)
+      : fileName.replace(/\.*$/, "");
   }
 
   __getFilePath(fileName) {
@@ -867,20 +852,18 @@ export class Downloader extends EventEmitter {
         return this.__opts.fileName(fileName, currentPath);
       }
     } else if (typeof this.__opts.fileName === "object") {
-      const fileNameOpts = this.__opts.fileName; // { name:string, ext:true|false|string}
+      const fileNameOpts = this.__opts.fileName;
       const name = fileNameOpts.name;
       const ext = fileNameOpts.hasOwnProperty("ext") ? fileNameOpts.ext : false;
 
       if (typeof ext === "string") {
         return `${name}.${ext}`;
       } else if (typeof ext === "boolean") {
-        // true: use the 'name' as full file name
-        // false (default) only replace the name
         if (ext) {
           return name;
         } else {
-          const _ext = fileName.includes(".") ? fileName.split(".").pop() : ""; // make sure there is a '.' in the fileName string
-          return _ext !== "" ? `${name}.${_ext}` : name; // if there is no extension, replace the whole file name
+          const _ext = fileName.includes(".") ? fileName.split(".").pop() : "";
+          return _ext !== "" ? `${name}.${_ext}` : name;
         }
       }
     }
@@ -901,7 +884,6 @@ export class Downloader extends EventEmitter {
     this.__downloaded += receivedBytes;
     this.__progress = total === 0 ? 0 : (this.__downloaded / total) * 100;
 
-    // Calculate the speed every second or if finished
     if (this.__downloaded === total || elapsedTime > 1000) {
       this.__statsEstimate.time = currentTime;
       this.__statsEstimate.bytes =
@@ -917,7 +899,6 @@ export class Downloader extends EventEmitter {
       this.emit("progress.throttled", this.getStats());
     }
 
-    // emit the progress
     this.emit("progress", this.getStats());
   }
 
@@ -936,7 +917,6 @@ export class Downloader extends EventEmitter {
       method,
     };
 
-    // if auth 'user:pass@host'
     if (urlParse.username || urlParse.password) {
       options.auth = `${urlParse.username}:${urlParse.password}`;
     }
@@ -950,13 +930,10 @@ export class Downloader extends EventEmitter {
 
   __getFilesizeInBytes(filePath) {
     try {
-      // 'throwIfNoEntry' was implemented on Node.js v14.17.0
-      // so we added try/catch in case is using an older version
       const stats = fs.statSync(filePath, { throwIfNoEntry: false });
       const fileSizeInBytes = stats.size || 0;
       return fileSizeInBytes;
     } catch (err) {
-      // mostly probably the file doesn't exist
       this.emit("warning", err);
     }
     return 0;
@@ -1030,18 +1007,15 @@ export class Downloader extends EventEmitter {
     }
 
     try {
-      // if access fail, the file doesnt exist yet
       fs.accessSync(_path, fs.constants.F_OK);
       const pathInfo = _path.match(/(.*)(\([0-9]+\))(\..*)$/);
       let base, ext, suffix;
 
-      // already has a (number) pattern
       if (pathInfo) {
         base = pathInfo[1].trim();
         ext = pathInfo[3];
         suffix = parseInt(pathInfo[2].replace(/\(|\)/g, ""));
       } else {
-        // we find the first dot in the filename
         const lastSlashIndex = _path.lastIndexOf(path.sep);
         const fileNameStart = lastSlashIndex + 1;
         const fileName = _path.substring(fileNameStart);
@@ -1055,7 +1029,6 @@ export class Downloader extends EventEmitter {
         suffix = 0;
       }
 
-      // generate a new path with '(number + 1)' until it doesn't exist
       return this.__uniqFileNameSync(base + " (" + ++suffix + ")" + ext);
     } catch (_err) {
       return _path;
@@ -1073,7 +1046,6 @@ export class Downloader extends EventEmitter {
         }
         if (this.__opts.removeOnFail) {
           return fs.access(this.__filePath, (_accessErr) => {
-            // if can't access, probably is not created yet
             if (_accessErr) {
               return resolve();
             }
@@ -1103,7 +1075,6 @@ export class Downloader extends EventEmitter {
     }
 
     if (this.__request) {
-      // from node => v13.14.X
       if (this.__request.destroy) {
         this.__request.destroy();
       } else {
@@ -1118,3 +1089,5 @@ export class Downloader extends EventEmitter {
     this.emit("stop");
   }
 }
+
+module.exports = { Downloader, DOWNLOAD_STATES };

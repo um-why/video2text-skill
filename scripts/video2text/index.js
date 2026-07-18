@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const clean = require("../utils/clean");
-const constants = require("../config/constants");
 const helper = require("../utils/helper");
 const token = require("../utils/token");
 const upload = require("../utils/upload");
@@ -70,7 +69,9 @@ async function main() {
       try {
         await fs.promises.mkdir(filepath, { recursive: true });
       } catch (error) {
-        utils.printError("临时下载目录创建失败: " + error);
+        utils.printError(
+          "临时下载目录创建失败: " + (error.message || String(error)),
+        );
         return;
       }
 
@@ -82,13 +83,17 @@ async function main() {
           tempFilePath !== "" &&
           tempFilePath.indexOf(".") === -1
         ) {
-          fs.renameSync(tempFilePath, tempFilePath + ".mp4");
-          tempFilePath += ".mp4";
+          try {
+            fs.renameSync(tempFilePath, tempFilePath + ".mp4");
+            tempFilePath += ".mp4";
+          } catch (renameError) {
+            utils.printWarn("文件重命名失败: " + renameError.message);
+          }
         }
         utils.printInfo("网络视频已下载到本地: " + tempFilePath);
         filename = tempFilePath;
       } catch (error) {
-        utils.printError("下载失败: " + error);
+        utils.printError("下载失败: " + (error.message || String(error)));
         return;
       }
     } else if (validator.isFilePath(filename)) {
@@ -118,9 +123,7 @@ async function main() {
       utils.printInfo("文件上传到安全空间成功，获取视频任务ID");
 
       const url = presignedUrl.url.substring(0, presignedUrl.url.indexOf("?"));
-      console.log(url);
       const task = await video.getVideoId(tokenValue, url);
-      console.log(task);
       if (!task || !task?.id || task.id === "") {
         throw new Error("获取视频任务ID失败，请反馈给开发者");
       }
@@ -131,7 +134,7 @@ async function main() {
       );
       id = task.id;
     } catch (error) {
-      console.log(error);
+      utils.printError("处理失败: " + (error.message || String(error)));
       return;
     }
   }
@@ -145,6 +148,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  utils.printError(error);
+  utils.printError(error.message || String(error));
   process.exit(1);
 });

@@ -53,7 +53,7 @@ async function download(url, path) {
       .on("retry", (attempt, opts) => {
         let count = Math.floor(opts.delay / 1000);
         const retryLog = () => {
-          inlineLog(`重试${attempt}/${opts.maxAttempts}次，等待${count}秒`);
+          inlineLog(`重试${attempt}/${opts.maxRetries}次，等待${count}秒`);
           if (count > 0) {
             setTimeout(() => retryLog(), 1000);
           }
@@ -87,6 +87,8 @@ async function download(url, path) {
 }
 
 module.exports = {
-  downloadPath,
+  byteHumanize,
   download,
+  downloadPath,
+  inlineLog,
 };

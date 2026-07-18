@@ -100,6 +100,13 @@ async function getJson(path, params) {
   return await request(options);
 }
 
+function isRetryableError(error) {
+  if (error && error.message) {
+    return !error.message.includes("GUAIKEI_API_TOKEN 无效");
+  }
+  return true;
+}
+
 async function withRetry(fn, maxAttempts, errorHandler) {
   let lastError;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -107,6 +114,9 @@ async function withRetry(fn, maxAttempts, errorHandler) {
       return await fn(attempt);
     } catch (error) {
       lastError = error;
+      if (!isRetryableError(error)) {
+        throw error;
+      }
       if (errorHandler) errorHandler(attempt, error);
       if (attempt < maxAttempts - 1) {
         const delay = Math.pow(2, attempt) * constants.RETRY_INTERVAL;

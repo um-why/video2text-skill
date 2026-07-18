@@ -1,5 +1,7 @@
 const constants = require("../config/constants");
+const helper = require("../utils/helper");
 const utils = require("../utils/utils");
+const http = require("http");
 const https = require("https");
 const fs = require("fs");
 
@@ -9,6 +11,10 @@ const fs = require("fs");
 async function uploadFileToOSS(filename, presignedUrl, headers) {
   const url = new URL(presignedUrl);
   return new Promise((resolve, reject) => {
+    const fileStats = fs.statSync(filename);
+    const totalSize = fileStats.size;
+    let uploadedSize = 0;
+
     const fileStream = fs.createReadStream(filename);
 
     const options = {
@@ -17,7 +23,8 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
       method: "PUT",
       headers: headers,
     };
-    const req = https.request(
+    const protocol = url.protocol === "https:" ? https : http;
+    const req = protocol.request(
       { ...options, timeout: constants.REQUEST_TIMEOUT },
       (res) => {
         // res.setEncoding("binary");
@@ -25,6 +32,7 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
         res.on("data", (chunk) => (body += chunk));
         res.on("end", () => {
           if (res.statusCode === 200) {
+            helper.inlineLog(`文件上传成功, ${helper.byteHumanize(totalSize)}`);
             resolve(body);
           } else {
             reject(new Error(`文件上传失败, 请求状态码: ${res.statusCode}`));
@@ -32,6 +40,12 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
         });
       },
     );
+    fileStream.on("data", (chunk) => {
+      uploadedSize += chunk.length;
+      helper.inlineLog(
+        `上传进度: ${helper.byteHumanize(uploadedSize)} / ${helper.byteHumanize(totalSize)}`,
+      );
+    });
 
     fileStream.on("error", (error) => {
       utils.printError(`上传读取文件失败: ${error.message}`);

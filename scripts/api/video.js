@@ -19,7 +19,7 @@ async function getPresignedUrl(token, filename) {
   if (response.data) {
     return response.data;
   } else {
-    return [];
+    return null;
   }
 }
 
@@ -41,7 +41,7 @@ async function getVideoId(token, url) {
   if (response.data) {
     return response.data;
   } else {
-    return [];
+    return null;
   }
 }
 
@@ -63,7 +63,7 @@ async function getVideoText(token, id, prompt = "") {
   if (response.data) {
     return response.data;
   } else {
-    return [];
+    return null;
   }
 }
 
