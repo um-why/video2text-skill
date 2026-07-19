@@ -145,7 +145,7 @@ async function main() {
     throw new Error("获取视频文案失败，请反馈给开发者");
   }
   utils.printInfo("视频文案获取成功，文案内容如下：");
-  utils.printInfo(text.text);
+  console.log(text.text);
 }
 
 main().catch((error) => {
