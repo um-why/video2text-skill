@@ -1,7 +1,7 @@
 function printBanner() {
   console.log("╔════════════════════════════════════════════╗");
   console.log("║                                            ║");
-  console.log("║       📕 视频转文本工具           ║");
+  console.log("║          🎬 视频文案智能提取大师            ║");
   console.log("║                                            ║");
   console.log("╚════════════════════════════════════════════╝");
   console.log("");

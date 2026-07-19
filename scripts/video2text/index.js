@@ -58,6 +58,7 @@ async function main() {
     utils.printHelp();
     return;
   }
+  utils.printBanner();
 
   const tokenValue = token.skillToken(process.env.GUAIKEI_API_TOKEN);
   if (tokenValue === "") return;
@@ -128,9 +129,9 @@ async function main() {
         throw new Error("获取视频任务ID失败，请反馈给开发者");
       }
       utils.printInfo(
-        "视频任务ID获取成功: " +
+        "视频任务ID获取成功: 【" +
           task.id +
-          "，该视频任务ID可在一小时内重复使用，以基于不同提示词的视频分析",
+          "】，该视频任务ID可在一小时内重复使用，以基于不同提示词的视频分析",
       );
       id = task.id;
     } catch (error) {

@@ -83,23 +83,6 @@ async function postJson(path, params, data) {
   return await request(options, jsonData);
 }
 
-async function getJson(path, params) {
-  if (!path || typeof path !== "string") {
-    throw new Error("路径 必须是非空字符串");
-  }
-  if (!params || typeof params !== "object") {
-    throw new Error("参数 必须是对象");
-  }
-
-  const fullPath = `${path}?${querystring.stringify(params)}`;
-  const options = {
-    host: constants.BASE_URL,
-    path: fullPath,
-    method: "GET",
-  };
-  return await request(options);
-}
-
 function isRetryableError(error) {
   if (error && error.message) {
     return !error.message.includes("GUAIKEI_API_TOKEN 无效");
@@ -119,7 +102,7 @@ async function withRetry(fn, maxAttempts, errorHandler) {
       }
       if (errorHandler) errorHandler(attempt, error);
       if (attempt < maxAttempts - 1) {
-        const delay = Math.pow(2, attempt) * constants.RETRY_INTERVAL;
+        const delay = Math.min(Math.pow(2, attempt) * constants.RETRY_INTERVAL, 60000);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

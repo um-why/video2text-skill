@@ -29,7 +29,7 @@ function deleteExpire() {
             );
             fs.unlink(path.join(filepath, file), (err) => {
               if (err) {
-                utils.printError("删除过期文件失败: " + err);
+                utils.printError("删除过期文件失败: " + (err.message || String(err)));
               }
             });
           }
