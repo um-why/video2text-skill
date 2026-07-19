@@ -1,0 +1,18 @@
+{
+  "name": "video2text-skill",
+  "version": "1.0.0",
+  "description": "调用千问大模型完成视频深度语义解析，快速转写网络视频链接与本地视频文件，自动剔除语气词、口误、重复台词等无效文本，自由定制各类风格文案，高效处理短视频二次创作、企业会议纪要、线上课程拆解、直播复盘、人物采访整理、知识素材提取、探店脚本撰写、培训课件整理等多类视频内容需求",
+  "main": "scripts/video2text/index.js",
+  "type": "commonjs",
+  "keywords": [
+    "ocr",
+    "video2text",
+    "video-analysis",
+    "content-workflow"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.14.0"
+  }
+}
