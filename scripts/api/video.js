@@ -16,16 +16,11 @@ async function getPresignedUrl(token, filename) {
     throw new Error("filename 必须是非空字符串");
   }
 
-  const params = {
-    _: Date.now(),
-    token,
-  };
   const data = { file: filename };
 
   const response = await requestApi(
-    "POST",
     "/api/video/presign",
-    params,
+    token,
     data,
     constants.CREATE_MAX_ATTEMPTS,
     "预上传",
@@ -33,7 +28,7 @@ async function getPresignedUrl(token, filename) {
   if (response.data) {
     return response.data;
   } else {
-    return null;
+    throw new Error("获取预签名上传信息失败");
   }
 }
 
@@ -41,7 +36,7 @@ async function getPresignedUrl(token, filename) {
  * 获取视频分析任务ID
  * @param {string} token API令牌
  * @param {string} url 视频上传后的URL（不含查询参数）
- * @returns {Promise<{id: string} | null>} 包含视频任务ID的对象；失败返回null
+ * @returns {Promise<{id: string} | null>} 包含视频分析任务ID的对象；失败返回null
  * @throws {Error} 网络错误或认证失败时抛出
  */
 async function getVideoId(token, url) {
@@ -52,16 +47,11 @@ async function getVideoId(token, url) {
     throw new Error("url 必须是非空字符串");
   }
 
-  const params = {
-    _: Date.now(),
-    token,
-  };
   const data = { url };
 
   const response = await requestApi(
-    "POST",
     "/api/video/id",
-    params,
+    token,
     data,
     constants.CREATE_MAX_ATTEMPTS,
     "视频ID",
@@ -69,7 +59,7 @@ async function getVideoId(token, url) {
   if (response.data) {
     return response.data;
   } else {
-    return null;
+    throw new Error("获取视频分析任务ID失败");
   }
 }
 
@@ -89,16 +79,11 @@ async function getVideoText(token, id, prompt = "") {
     throw new Error("id 必须是非空字符串");
   }
 
-  const params = {
-    _: Date.now(),
-    token,
-  };
   const data = { id, prompt };
 
   const response = await requestApi(
-    "POST",
     "/api/video/text",
-    params,
+    token,
     data,
     constants.QUERY_MAX_ATTEMPTS,
     "视频文案",
@@ -106,7 +91,7 @@ async function getVideoText(token, id, prompt = "") {
   if (response.data) {
     return response.data;
   } else {
-    return null;
+    throw new Error("获取视频文案失败");
   }
 }
 

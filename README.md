@@ -40,8 +40,8 @@
 
 ### 标准计费标准
 
-| 计费档位          | 单价        | 最小结算粒度   | 适用场景           |
-| ----------------- | ----------- | -------------- | ------------------ |
+| 计费档位          | 单价         | 最小结算粒度   | 适用场景           |
+| ----------------- | ------------ | -------------- | ------------------ |
 | 视频时长 ≥ 1分钟  | 0.6 元/分钟 | 整分钟结算     | 课程、会议、长访谈 |
 | 视频时长 ＜ 1分钟 | 0.1 元/10秒 | 10秒为最小单位 | 短视频、片段素材   |
 
@@ -91,7 +91,7 @@ node scripts/video2text/index.js --file "/path/to/your/video.mp4" --prompt "分�
 **转换判定规则**
 
 1. 存在视频链接 / 本地文件路径 → 使用 `--file` 参数
-2. 无新视频、仅复用上次解析内容 → `--id "last"`
+2. 无新视频、仅复用上次解析内容 → `--id "***"`
 3. 用户有总结 / 改写 / 提取 / 分析等需求 → 内容写入 `--prompt`
 4. 同时传入文件路径与任务ID，优先执行 `--id`，忽略 `--file`
 5. 无自定义 prompt 时，默认完整转录视频全部文字
@@ -101,7 +101,7 @@ node scripts/video2text/index.js --file "/path/to/your/video.mp4" --prompt "分�
 | 视频提取 https://example.com/video.mp4 中的文字          | `node scripts/video2text/index.js --file "https://example.com/video.mp4"`                                   |
 | 把本地 /path/to/your/video.mp4 改成小红书风格的文案      | `node scripts/video2text/index.js --file "/path/to/your/video.mp4" --prompt "改写成小红书风格的文案"`       |
 | 总结一下这个视频的核心观点 https://example.com/video.mp4 | `node scripts/video2text/index.js --file "https://example.com/video.mp4" --prompt "总结这个视频的核心观点"` |
-| 用刚才分析的视频提取所有金句                             | `node scripts/video2text/index.js --id "last" --prompt "提取视频中的所有金句"`                              |
+| 用刚才分析的视频提取所有金句                             | `node scripts/video2text/index.js --id "***" --prompt "提取视频中的所有金句"`                              |
 
 ## 三、 🤔 常见问题
 

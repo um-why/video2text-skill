@@ -1,10 +1,13 @@
 const constants = require("../config/constants");
 const utils = require("../utils/utils");
+const { skillName } = require("../utils/name");
 const https = require("https");
 const querystring = require("querystring");
 
 async function request(options, data = null) {
   return new Promise((resolve, reject) => {
+    let timedOut = false;
+
     const req = https.request(
       { ...options, timeout: constants.REQUEST_TIMEOUT },
       (res) => {
@@ -12,23 +15,26 @@ async function request(options, data = null) {
         let body = "";
         res.on("data", (chunk) => (body += chunk));
         res.on("end", () => {
-          if (res.statusCode === 200) {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
             try {
               const jsonBody = JSON.parse(body);
               if (jsonBody.errcode === 0) {
                 resolve(jsonBody);
               } else {
-                reject(new Error(jsonBody.errmsg || "请求出现未知错误"));
+                let e = new Error(
+                  `请求失败, 错误码: ${jsonBody?.errcode || 1}, 错误信息: ${jsonBody?.errmsg || "未知错误"}`,
+                );
+                reject(e);
               }
             } catch (error) {
-              reject(new Error(`解析响应失败: ${error.message}`));
+              reject(new Error(`响应解析失败: ${error.message}`));
             }
           } else if (res.statusCode === 401 || res.statusCode === 403) {
-            reject(
-              new Error(
-                "GUAIKEI_API_TOKEN 无效, 请检查环境变量 或 联系微信: 13395823479 获取解决方案",
-              ),
+            const e = new Error(
+              "GUAIKEI_API_TOKEN 无效, 请检查环境变量 或 联系微信: 13395823479 获取解决方案",
             );
+            e.noRetry = true;
+            reject(e);
           } else {
             reject(new Error(`请求失败 状态码: ${res.statusCode}`));
           }
@@ -37,6 +43,9 @@ async function request(options, data = null) {
     );
 
     req.on("error", (error) => {
+      if (timedOut) {
+        return;
+      }
       if (error.code === "ETIMEDOUT" || error.code === "ECONNRESET") {
         reject(new Error("请求超时或连接被重置"));
       } else {
@@ -45,6 +54,7 @@ async function request(options, data = null) {
     });
 
     req.on("timeout", () => {
+      timedOut = true;
       req.destroy();
       reject(new Error(`请求超时, ${constants.REQUEST_TIMEOUT}ms`));
     });
@@ -56,17 +66,18 @@ async function request(options, data = null) {
   });
 }
 
-async function postJson(path, params, data) {
+async function postJson(path, token, data) {
   if (!path || typeof path !== "string") {
     throw new Error("路径 必须是非空字符串");
   }
-  if (!params || typeof params !== "object") {
-    throw new Error("参数 必须是对象");
+  if (!token || typeof token !== "string") {
+    throw new Error("token 必须是非空字符串");
   }
   if (!data || typeof data !== "object") {
     throw new Error("数据 必须是对象");
   }
 
+  const params = { _: Date.now(), skill_name: skillName() };
   const fullPath = `${path}?${querystring.stringify(params)}`;
   const jsonData = JSON.stringify(data);
 
@@ -77,17 +88,11 @@ async function postJson(path, params, data) {
     headers: {
       "Content-Type": "application/json",
       "Content-Length": Buffer.byteLength(jsonData),
+      TOKEN: token,
     },
   };
 
   return await request(options, jsonData);
-}
-
-function isRetryableError(error) {
-  if (error && error.message) {
-    return !error.message.includes("GUAIKEI_API_TOKEN 无效");
-  }
-  return true;
 }
 
 async function withRetry(fn, maxAttempts, errorHandler) {
@@ -97,12 +102,15 @@ async function withRetry(fn, maxAttempts, errorHandler) {
       return await fn(attempt);
     } catch (error) {
       lastError = error;
-      if (!isRetryableError(error)) {
+      if (error && error.noRetry) {
         throw error;
       }
       if (errorHandler) errorHandler(attempt, error);
       if (attempt < maxAttempts - 1) {
-        const delay = Math.min(Math.pow(2, attempt) * constants.RETRY_INTERVAL, 60000);
+        const delay = Math.min(
+          Math.pow(2, attempt) * constants.RETRY_INTERVAL,
+          60000,
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -113,16 +121,10 @@ async function withRetry(fn, maxAttempts, errorHandler) {
 /**
  * 支持重试的API请求方法
  */
-async function requestApi(method, path, params, data, maxAttempts, actionName) {
+async function requestApi(path, token, data, maxAttempts, actionName) {
   return await withRetry(
     async () => {
-      let response;
-      if (method === "POST") {
-        response = await postJson(path, params, data);
-      } else {
-        response = await getJson(path, params);
-      }
-      return response;
+      return await postJson(path, token, data);
     },
     maxAttempts,
     (attempt, error) => {

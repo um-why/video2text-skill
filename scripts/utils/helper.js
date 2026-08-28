@@ -2,17 +2,14 @@ const { Downloader } = require("../utils/download.js");
 const path = require("path");
 const constants = require("../config/constants");
 
-/**
- * 定义技能下载目录路径
- */
-function downloadPath() {
-  return path.join(path.dirname(__filename), "..", "..", "tmp");
-}
-
 function inlineLog(msg) {
-  process.stdout.clearLine();
-  process.stdout.cursorTo(0);
-  process.stdout.write(msg + "\r");
+  try {
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    process.stdout.write(msg + "\r");
+  } catch (_) {
+    process.stderr.write(msg + "\n");
+  }
 }
 
 function byteHumanize(byte) {
@@ -21,9 +18,7 @@ function byteHumanize(byte) {
   }
   const units = ["b", "kB", "MB", "GB", "TB"];
   const number = Math.floor(Math.log(byte) / Math.log(1024));
-  return (
-    (byte / Math.pow(1024, Math.floor(number))).toFixed(1) + " " + units[number]
-  );
+  return (byte / Math.pow(1024, number)).toFixed(1) + " " + units[number];
 }
 
 /**
@@ -89,6 +84,5 @@ async function download(url, path) {
 module.exports = {
   byteHumanize,
   download,
-  downloadPath,
   inlineLog,
 };
