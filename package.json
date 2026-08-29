@@ -39,6 +39,14 @@
     "video-summary",
     "audio-to-text"
   ],
+  "homepage": "https://github.com/um-why/video2text-skill#readme",
+  "bugs": {
+    "url": "https://github.com/um-why/video2text-skill/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/um-why/video2text-skill.git"
+  },
   "author": "GuaiKei (微信 13395823479)",
   "license": "MIT",
   "category": "content-creation",
