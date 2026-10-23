@@ -18,7 +18,7 @@ function markUploadRetry(error, statusCode) {
 }
 
 /**
- * 上传文件到本次预签名地址，仅用于视频转文案。
+ * 上传文件到本次预签名地址，仅用于视频转文案。处理完毕 24 小时后从服务器销毁，不存储、不对外泄露、不用于模型训练。
  * 网络错误、5xx、408、429 会重试；其它 4xx 立即失败。
  */
 async function uploadOnce(filename, presignedUrl, headers) {
