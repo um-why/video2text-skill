@@ -17,6 +17,7 @@ function deleteExpire() {
       return;
     }
     files.forEach((file) => {
+      if (file === ".last_task_id") return;
       fs.stat(path.join(filepath, file), (err, stats) => {
         if (err) {
           return;

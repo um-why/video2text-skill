@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 
 function isUrl(url) {
   try {
@@ -18,7 +19,37 @@ function isFilePath(path) {
   }
 }
 
+/**
+ * 预签名只提交文件名。扩展名大小写统一成 .mp4，不改本地原文件。
+ * @param {string} filePath
+ * @returns {string}
+ */
+function presignFileName(filePath) {
+  const base = path.basename(filePath);
+  const ext = path.extname(base);
+  if (ext.toLowerCase() !== ".mp4") {
+    const shown = ext || "无扩展名";
+    throw new Error(`当前仅支持 mp4，收到 ${shown}`);
+  }
+  if (ext === ".mp4") return base;
+  return base.slice(0, -ext.length) + ".mp4";
+}
+
+/**
+ * 直链下载结果没有扩展名时补 .mp4。已有其它扩展名则留给 presignFileName 拒绝。
+ * @param {string} filePath
+ * @returns {string}
+ */
+function ensureDownloadExtension(filePath) {
+  if (path.extname(filePath) !== "") return filePath;
+  const next = `${filePath}.mp4`;
+  fs.renameSync(filePath, next);
+  return next;
+}
+
 module.exports = {
   isFilePath,
   isUrl,
+  presignFileName,
+  ensureDownloadExtension,
 };

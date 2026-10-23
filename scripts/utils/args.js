@@ -81,20 +81,11 @@ function parseArgs(args, schema) {
       }
     } else if (!arg.startsWith("-")) {
       if (schema.positionalKey) {
-        if (
-          result[schema.positionalKey] === undefined ||
-          !seen.has(schema.positionalKey)
-        ) {
-          // 位置参数与显式 flag 冲突时告警而非静默覆盖
-          if (result[schema.positionalKey] !== undefined) {
-            warnings.push(
-              `位置参数 "${arg}" 与已解析值冲突，将保留 "${result[schema.positionalKey]}"`,
-            );
-          } else {
-            result[schema.positionalKey] = arg;
-          }
-        } else {
+        if (seen.has(schema.positionalKey)) {
           warnings.push(`已通过 flag 指定，忽略多余位置参数: "${arg}"`);
+        } else {
+          result[schema.positionalKey] = arg;
+          seen.add(schema.positionalKey);
         }
       } else {
         throw new Error(`未识别的位置参数: ${arg}`);

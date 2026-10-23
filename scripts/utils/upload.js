@@ -1,13 +1,27 @@
 const constants = require("../config/constants");
 const helper = require("../utils/helper");
 const utils = require("../utils/utils");
+const { withRetry } = require("./retry");
 const https = require("https");
 const fs = require("fs");
 
+function markUploadRetry(error, statusCode) {
+  if (
+    statusCode >= 400 &&
+    statusCode < 500 &&
+    statusCode !== 408 &&
+    statusCode !== 429
+  ) {
+    error.noRetry = true;
+  }
+  return error;
+}
+
 /**
- * 上传文件到安全空间，技能开发者、服务提供方，承诺上传后的视频，不外泄、不转存、不另作他用、仅用于视频转文案服务，且在视频转文案完成后自动删除
+ * 上传文件到本次预签名地址，仅用于视频转文案。
+ * 网络错误、5xx、408、429 会重试；其它 4xx 立即失败。
  */
-async function uploadFileToOSS(filename, presignedUrl, headers) {
+async function uploadOnce(filename, presignedUrl, headers) {
   const url = new URL(presignedUrl);
   if (url.protocol !== "https:") {
     throw new Error("上传URL必须是HTTPS协议");
@@ -36,7 +50,7 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
       headers: uploadHeaders,
     };
     const req = https.request(
-      { ...options, timeout: constants.REQUEST_TIMEOUT },
+      { ...options, timeout: constants.UPLOAD_TIMEOUT },
       (res) => {
         let body = "";
         res.on("data", (chunk) => (body += chunk));
@@ -49,8 +63,11 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
             resolve(body);
           } else {
             reject(
-              new Error(
-                `文件上传失败, 状态码: ${res.statusCode}, 响应体: ${body}`,
+              markUploadRetry(
+                new Error(
+                  `文件上传失败, 状态码: ${res.statusCode}, 响应体: ${body}`,
+                ),
+                res.statusCode,
               ),
             );
           }
@@ -93,12 +110,25 @@ async function uploadFileToOSS(filename, presignedUrl, headers) {
       settled = true;
       fileStream.destroy();
       req.destroy();
-      utils.printError(`上传请求超时: ${constants.REQUEST_TIMEOUT}ms`);
+      utils.printError(`上传请求超时: ${constants.UPLOAD_TIMEOUT}ms`);
       reject(new Error("上传请求超时"));
     });
 
     fileStream.pipe(req);
   });
+}
+
+async function uploadFileToOSS(filename, presignedUrl, headers) {
+  const maxAttempts = constants.UPLOAD_MAX_ATTEMPTS;
+  return await withRetry(
+    async () => uploadOnce(filename, presignedUrl, headers),
+    maxAttempts,
+    (attempt, error) => {
+      utils.printError(
+        `【上传重试】${attempt + 1}/${maxAttempts} 次 - ${error.message}`,
+      );
+    },
+  );
 }
 
 module.exports = { uploadFileToOSS };
