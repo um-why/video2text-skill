@@ -35,7 +35,7 @@ class TimeoutError extends SkillError {
 
 class AuthError extends SkillError {
   constructor(message) {
-    super("AUTH_ERROR", message);
+    super("AUTH_ERROR", message, true);
     this.name = "AuthError";
   }
 }

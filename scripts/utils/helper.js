@@ -1,5 +1,6 @@
 const { Downloader } = require("../utils/download.js");
 const constants = require("../config/constants");
+const { safeDownloadName } = require("./validator");
 const fs = require("fs");
 
 function inlineLog(msg) {
@@ -34,6 +35,7 @@ async function download(url, path) {
         delay: constants.RETRY_INTERVAL,
       },
       override: false,
+      fileName: (name) => safeDownloadName(name),
     };
 
     let progressLog = "";

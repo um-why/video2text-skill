@@ -33,7 +33,13 @@ async function request(options, data = null) {
           finish(reject, new NetworkError(`响应流错误: ${err.message}`));
         });
         let body = "";
-        res.on("data", (chunk) => (body += chunk));
+        res.on("data", (chunk) => {
+          body += chunk;
+          if (body.length > 10 * 1024 * 1024) {
+            finish(reject, new NetworkError("响应体超过 10MB"));
+            req.destroy();
+          }
+        });
         res.on("end", () => {
           if (timedOut || settled) return;
           if (res.statusCode === 200) {
@@ -71,11 +77,15 @@ async function request(options, data = null) {
             finish(reject, new AuthError(AUTH_MESSAGE));
           } else {
             const status = res.statusCode;
-            const code =
-              status >= 500 && status <= 599 ? "HTTP_5xx" : `HTTP_${status}`;
+            const serverError = status >= 500 && status <= 599;
+            const code = serverError ? "HTTP_5xx" : `HTTP_${status}`;
             finish(
               reject,
-              new ApiError(code, `请求失败, 状态码: ${status}`, true),
+              new ApiError(
+                code,
+                `请求失败, 状态码: ${status}`,
+                !serverError,
+              ),
             );
           }
         });
@@ -137,13 +147,14 @@ async function postJson(path, token, data) {
 /**
  * 查询接口的轮询分类。
  * 视频接口里 errcode 1 同时表示「处理中」和参数/任务错误，只有文案含「处理中」才继续等。
- * 其它业务错误立即失败。网络和超时可以继续查。
+ * 其它业务错误立即失败。网络错误、请求超时和 HTTP 5xx 可以继续查。
  * @param {Error} error
  * @returns {"pending"|"fail"|"retry"}
  */
 function classifyPollError(error) {
   const message = error && error.message ? String(error.message) : "";
   if (message.includes("处理中")) return "pending";
+  if (error && error.code === "HTTP_5xx") return "retry";
   if (
     error &&
     (error.noRetry || error.name === "ApiError" || error.name === "AuthError")
@@ -158,7 +169,7 @@ function sleep(ms) {
 }
 
 /**
- * 创建类请求。网络和超时会重试；业务错误码 >= 10，以及非「处理中」的 errcode 1，立即失败。
+ * 创建类请求。网络错误、超时和 HTTP 5xx 会重试；认证失败、业务错误码 >= 10，以及非「处理中」的 errcode 1，立即失败。
  */
 async function requestApi(path, token, data, maxAttempts, actionName) {
   return await withRetry(
@@ -176,7 +187,7 @@ async function requestApi(path, token, data, maxAttempts, actionName) {
 
 /**
  * 轮询视频文案。间隔从 RETRY_INTERVAL 起按 2、4、8 秒翻倍，单次最长 RETRY_MAX_INTERVAL。
- * 次数用尽仍是「处理中」时抛出 TIMEOUT，不把未完成当成空结果。
+ * 次数用尽仍是「处理中」时抛出 STILL_PROCESSING，不把未完成当成空结果。
  */
 async function pollTaskResult(path, token, data, actionName) {
   const maxAttempts = constants.QUERY_MAX_ATTEMPTS;
@@ -207,9 +218,9 @@ async function pollTaskResult(path, token, data, actionName) {
     }
   }
   if (classifyPollError(lastError) === "pending") {
-    throw new SkillError("TIMEOUT", "视频仍在处理中", true);
+    throw new SkillError("STILL_PROCESSING", "视频仍在处理中", true);
   }
-  throw lastError || new SkillError("TIMEOUT", "视频仍在处理中", true);
+  throw lastError || new SkillError("STILL_PROCESSING", "视频仍在处理中", true);
 }
 
 module.exports = { requestApi, pollTaskResult, classifyPollError };

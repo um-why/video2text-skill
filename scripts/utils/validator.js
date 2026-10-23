@@ -42,9 +42,33 @@ function presignFileName(filePath) {
  */
 function ensureDownloadExtension(filePath) {
   if (path.extname(filePath) !== "") return filePath;
-  const next = `${filePath}.mp4`;
+  let next = `${filePath}.mp4`;
+  let n = 1;
+  while (fs.existsSync(next)) {
+    next = `${filePath}(${n++}).mp4`;
+  }
   fs.renameSync(filePath, next);
   return next;
+}
+
+/**
+ * 下载库给出的文件名可能含 Windows 非法字符、保留设备名，或百分号编码。
+ * 在落盘前净化，不改下载库本身。
+ * @param {string} fileName
+ * @returns {string}
+ */
+function safeDownloadName(fileName) {
+  let name = String(fileName || "");
+  try {
+    name = decodeURIComponent(name);
+  } catch (_) {}
+  name = name.replace(/[<>:"|?*\\/\u0000-\u001f]/g, "_").replace(/[. ]+$/g, "").trim();
+  const ext = path.extname(name);
+  const stem = ext ? name.slice(0, -ext.length) : name;
+  if (!stem || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(stem)) {
+    return `download_${Date.now()}.mp4`;
+  }
+  return name;
 }
 
 module.exports = {
@@ -52,4 +76,5 @@ module.exports = {
   isUrl,
   presignFileName,
   ensureDownloadExtension,
+  safeDownloadName,
 };

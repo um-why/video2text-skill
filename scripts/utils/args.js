@@ -5,7 +5,7 @@
 function readValueAfterFlag(args, index, flagName, def) {
   const next = args[index + 1];
   if (next === undefined) throw new Error(`参数 ${flagName} 缺少值`);
-  if (/^--[a-zA-Z]/.test(next)) {
+  if (/^--?[a-zA-Z]/.test(next)) {
     throw new Error(`参数 ${flagName} 缺少值（下一个 token 是 ${next}）`);
   }
   if (def && def.type === "number" && !/^-?\d+(\.\d+)?$/.test(next)) {

@@ -210,6 +210,10 @@ async function main() {
     id = last;
   }
 
+  if (id && file) {
+    utils.printWarn("同时传入 --file 与 --id，以 --id 为准，已忽略 --file");
+  }
+
   if ([...prompt].length > 1000) {
     utils.printError("提示词不能超过 1000 个字符");
     process.exit(1);
@@ -259,7 +263,7 @@ async function main() {
     utils.printInfo("视频文案获取成功，文案内容如下：");
     console.log(text.text);
   } catch (error) {
-    if (error && error.code === "TIMEOUT") {
+    if (error && error.code === "STILL_PROCESSING") {
       printStillProcessing(id, prompt);
       process.exit(2);
     }

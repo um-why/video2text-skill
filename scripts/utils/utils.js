@@ -12,14 +12,17 @@ function printBanner() {
 
 function printLog(level, message) {
   message = String(message ?? "");
+  const useColor = Boolean(process.stderr.isTTY) && !process.env.NO_COLOR;
   const colorMap = {
     INFO: "\x1b[34m",
     SUCCESS: "\x1b[32m",
     WARN: "\x1b[33m",
     ERROR: "\x1b[31m",
   };
+  const color = useColor ? colorMap[level] || "" : "";
+  const reset = useColor ? "\x1b[0m" : "";
   console.error(
-    `${colorMap[level] || ""}[${new Date().toLocaleString()}] [${level}] ${message}\x1b[0m`,
+    `${color}[${new Date().toLocaleString()}] [${level}] ${message}${reset}`,
   );
 }
 

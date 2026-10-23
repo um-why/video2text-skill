@@ -53,7 +53,9 @@ async function uploadOnce(filename, presignedUrl, headers) {
       { ...options, timeout: constants.UPLOAD_TIMEOUT },
       (res) => {
         let body = "";
-        res.on("data", (chunk) => (body += chunk));
+        res.on("data", (chunk) => {
+          if (body.length < 2048) body += chunk;
+        });
         res.on("end", () => {
           if (settled) return;
           settled = true;
@@ -65,7 +67,7 @@ async function uploadOnce(filename, presignedUrl, headers) {
             reject(
               markUploadRetry(
                 new Error(
-                  `文件上传失败, 状态码: ${res.statusCode}, 响应体: ${body}`,
+                  `文件上传失败, 状态码: ${res.statusCode}, 响应体: ${String(body).slice(0, 200)}`,
                 ),
                 res.statusCode,
               ),

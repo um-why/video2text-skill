@@ -8,6 +8,6 @@ module.exports = {
   QUERY_MAX_ATTEMPTS: 30, // 查询视频文案最大轮询次数
   RETRY_INTERVAL: 2000, // 重试基础间隔（毫秒）
   RETRY_MAX_INTERVAL: 30000, // 重试与轮询间隔上限（毫秒）
-  EXPIRE_TIME: 60 * 60 * 24, // 临时文件过期时间 = 24小时
+  EXPIRE_TIME: 60 * 60 * 24, // 24 小时：tmp 清理和 pending 续传共用这一期限
   VERSION: pkg.version,
 };

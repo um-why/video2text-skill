@@ -1,5 +1,4 @@
 const constants = require("../config/constants");
-const helper = require("../utils/helper");
 const utils = require("../utils/utils");
 const fs = require("fs");
 const path = require("path");
@@ -23,9 +22,8 @@ function deleteExpire() {
           return;
         }
         const fileTime = stats.mtime || stats.birthtime;
-        if (fileTime) {
-          const fileDate = new Date(Date.parse(fileTime));
-          if (fileDate.getTime() < now - constants.EXPIRE_TIME * 1000) {
+        if (fileTime && typeof fileTime.getTime === "function") {
+          if (fileTime.getTime() < now - constants.EXPIRE_TIME * 1000) {
             utils.printInfo(
               "清理技能运行中临时下载的过期文件: " + file + " ，以节省磁盘空间",
             );
