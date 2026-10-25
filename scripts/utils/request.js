@@ -58,10 +58,11 @@ async function request(options, data = null) {
                 finish(reject, new ApiError("410", "TOKEN 状态异常", true));
               } else {
                 const errmsg = jsonBody.errmsg || "请求失败";
-                const pending = errmsg.includes("处理中");
+                const pending =
+                  jsonBody.errcode === 1 || errmsg.includes("处理中");
                 const noRetry =
                   jsonBody.errcode >= 10 ||
-                  (jsonBody.errcode === 1 && !pending);
+                  (jsonBody.errcode !== 1 && jsonBody.errcode !== 0 && !pending);
                 finish(
                   reject,
                   new ApiError(jsonBody.errcode.toString(), errmsg, noRetry),
@@ -146,13 +147,14 @@ async function postJson(path, token, data) {
 
 /**
  * 查询接口的轮询分类。
- * 视频接口里 errcode 1 同时表示「处理中」和参数/任务错误，只有文案含「处理中」才继续等。
+ * errcode 1 表示处理中，继续等。11-14 为入参/任务错误，立即失败。
  * 其它业务错误立即失败。网络错误、请求超时和 HTTP 5xx 可以继续查。
  * @param {Error} error
  * @returns {"pending"|"fail"|"retry"}
  */
 function classifyPollError(error) {
   const message = error && error.message ? String(error.message) : "";
+  if (error && String(error.code) === "1") return "pending";
   if (message.includes("处理中")) return "pending";
   if (error && error.code === "HTTP_5xx") return "retry";
   if (

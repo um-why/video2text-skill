@@ -5,6 +5,15 @@ const { withRetry } = require("./retry");
 const https = require("https");
 const fs = require("fs");
 
+function headerCI(headers, name) {
+  if (!headers || typeof headers !== "object") return "";
+  const want = String(name).toLowerCase();
+  for (const [k, v] of Object.entries(headers)) {
+    if (String(k).toLowerCase() === want && v) return String(v);
+  }
+  return "";
+}
+
 function markUploadRetry(error, statusCode) {
   if (
     statusCode >= 400 &&
@@ -39,8 +48,8 @@ async function uploadOnce(filename, presignedUrl, headers) {
     // 关键修复：明确 Content-Length，否则 Node 对流式 body 默认使用 chunked
     // Transfer-Encoding，阿里云 OSS 预签名 PUT 通常会拒绝而返回 400/403
     uploadHeaders["Content-Length"] = String(totalSize);
-    if (!uploadHeaders["Content-Type"]) {
-      uploadHeaders["Content-Type"] = "application/octet-stream";
+    if (!headerCI(uploadHeaders, "Content-Type")) {
+      uploadHeaders["Content-Type"] = "video/mp4";
     }
 
     const options = {
