@@ -1,6 +1,6 @@
 {
   "name": "video2text-ai",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "视频文案智能提取 video2text-ai：视频转文字、视频文案提取。把本地 mp4 或 mp4 直链转成干净文案，并按 Prompt 生成总结、改写、金句、分镜头和翻译。Video to text transcription and rewriting powered by Qwen.",
   "main": "scripts/video2text/index.js",
   "type": "commonjs",
